@@ -1,99 +1,156 @@
 # Annual Report Analysis
 
-Agentic analysis of annual report files by section like Letter to Shareholders, MD&A, Financial Statements, Audit Report, Corporate Governance, SDG, ESG and etc., with the agno which is full-stack agentic framework.
+A sophisticated AI-powered tool for analyzing annual reports using a multi-agent system with collaboration and memory, featuring an interactive Streamlit-based UI for comprehensive analysis visualization.
 
-## Quick start
-- Put a parsed report (.md or .json) in:
-  - `annual_report_analysis/output/your_report.md` (or `.json`)
-- Run with Python:
-```bash
-python -m annual_report_analysis.runner
-```
-- Or use the CLI (additional options):
-```bash
-annual-report-analysis --input ./annual_report_analysis/output --max-chars 3000 --force-agno
-```
-- Output is written to:
-```
-annual_report_analysis/output/analysis_summary.json
-```
+## Features
 
-## How it works (simple)
-1) The app loads your file and splits it into chunks (~3,000 chars).
-2) Each chunk is routed to a section (e.g., MD&A, ESG).
-3) The section agent summarizes the chunk, detects sentiment and risks, and extracts things from the contect though proper analysis.
-4) Agents store results to long‑term memory and send a message to the supervisor.
-5) All section summaries are combined into a single global report.
+### Core Analysis Engine
+- **Multi-Agent Analysis**: Specialized agents for different sections of annual reports
+- **Collaborative Memory**: Shared insights between agents for better analysis
+- **Task Decomposition**: Smart breaking down of complex analysis tasks
+- **Enhanced Tools**: Web search, financial data, news aggregation, and web crawling capabilities
+- **Sentiment Analysis**: Using FinBERT with financial shenanigans detection
+- **Document Processing**: PDF parsing with advanced layout recognition
 
-- If Agno is installed:
-  - A team of agents with distinct prompts processes the chunks.
-- If not:
-  - A deterministic supervisor + section agents run locally with the same outputs.
-
-## CLI options
-```bash
-annual-report-analysis \
-  --input ./annual_report_analysis/output \
-  --max-chars 3000 \
-  --force-agno
-```
-- `--input`: directory with your `.md` or `.json` report
-- `--max-chars`: chunk size (characters)
-- `--force-agno`: prefer Agno runtime when available
-
-Environment overrides (optional):
-- `ANNUAL_FORCE_AGNO=1` to prefer Agno
-- `ANNUAL_FORCE_FALLBACK=1` to force deterministic path
+### Interactive UI Features
+- **📊 Financial Analysis Dashboard**: Comprehensive financial metrics and performance indicators
+- **🎯 Risk Assessment**: Strategic, operational, and ESG risk evaluation
+- **📰 News & Sentiment Analysis**: Real-time news tracking with sentiment scoring
+- **🌍 UN SDG Analysis**: Complete tracking of sustainability goals and initiatives
+- **📈 Advanced Visualizations**: Interactive charts and multi-company comparisons
 
 ## Installation
-This project runs without external deps. To enable Agno/Transformers paths:
-```bash
-pip install -r requirements.txt
-```
-(Installs `agno-client`, `phidata`, `transformers`, `torch`.)
 
-Editable install for development:
+### Basic Installation
 ```bash
 pip install -e .
 ```
 
-## Configuration
-- Input directory: files in `annual_report_analysis/output/` are picked up by default
-- Chunk size: `tools.load_parsed_document_chunks(max_chunk_chars=...)`
-- Prompts: `prompts.SECTION_GUIDANCE` and `prompts.AGNO_SYSTEM_PROMPTS`
-- Memory: JSONL under `annual_report_analysis/memory_store/{agent}/{section}.jsonl`
+### Development Installation
+```bash
+pip install -e ".[dev]"
+```
 
-## Project structure
+### Post-Installation
+```bash
+python scripts/postinstall.py
+```
+
+## Quick Start
+
+### Command Line Analysis
+1. Place your annual report in the output directory:
+```bash
+cp your_report.pdf annual_report_analysis/output/
+```
+
+2. Run the analysis:
+```bash
+python -m annual_report_analysis.utils.cli
+```
+
+3. Check the results:
+```bash
+cat annual_report_analysis/output/analysis_summary.json
+```
+
+### Interactive UI
+1. Start the Streamlit application:
+```bash
+python run_ui.py
+```
+
+2. Open your web browser and navigate to http://localhost:8501
+
+3. Use the sidebar to:
+   - Select a company to analyze
+   - Choose the analysis year
+   - Toggle different analysis sections
+   - Customize the view
+
+## Project Structure
+
 ```
 annual_report_analysis/
-  __init__.py
-  agents.py               # Deterministic supervisor + section agents and Agno factories
-  agno_support.py         # Agno runtime selection and collaborative run loop
-  cli.py                  # CLI entrypoint (argparse)
-  config.py               # App defaults (paths, flags)
-  document_processing.py  # File-level parsing utilities (reserved/optional)
-  memory.py               # Short/Long term memory implementations
-  prompts.py              # Guidance and Agno system prompts
-  runner.py               # Minimal entry that calls workflow
-  state.py                # Dataclasses for state/messages
-  tools.py                # Loader, heuristics, fallback analyzers
-  transformer_tools.py    # Optional HF pipelines (FinBERT, zero-shot)
-  workflow.py             # Orchestrator; prefers Agno then fallback
+├── core/               # Core functionality and data models
+│   ├── state.py       # Data models and state management
+│   ├── config.py      # Configuration handling
+│   └── workflow.py    # Main workflow orchestration
+├── agents/            # Agent implementations
+│   ├── agents.py      # Base and specialized agents
+│   ├── memory.py      # Agent memory systems
+│   └── prompts.py     # Agent prompts and guidance
+├── tools/             # Analysis and processing tools
+│   ├── tools.py       # Basic analysis tools
+│   └── enhanced_tools.py  # Advanced tools (web, finance)
+├── ui/                # Streamlit user interface
+│   ├── app.py        # Main Streamlit application
+│   └── mock_data.py  # Sample data for UI development
+└── utils/             # Utility functions
+    ├── cli.py         # Command line interface
+    └── runner.py      # Execution runners
 ```
 
 ## Development
-- Makefile (optional helper): `make install`, `make install-full`, `make run`, `make clean`
-- CI: GitHub Action builds, runs a sample, and prints output
 
-## FAQ
-- Where do I put my file?
-  - `annual_report_analysis/output/your_report.md` (or `.json`).
-- How do I force the deterministic path?
-  - `ANNUAL_FORCE_FALLBACK=1 python -m annual_report_analysis.runner`
-- How do I enable Agno?
-  - `pip install -r requirements.txt` then `--force-agno` or `ANNUAL_FORCE_AGNO=1`.
-- Where are the results?
-  - `annual_report_analysis/output/analysis_summary.json`.
+### Setup
+```bash
+# Install dev dependencies
+pip install -r requirements-dev.txt
+
+# Install pre-commit hook
+cp scripts/pre-commit.py .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+### Common Tasks
+```bash
+# Format code
+make format
+
+# Run linting
+make lint
+
+# Run tests
+make test
+
+# Clean build artifacts
+make clean
+```
+
+## Configuration
+
+The system can be configured through:
+
+1. Environment variables:
+- `ANNUAL_FORCE_AGNO=1`: Force Agno runtime
+- `ANNUAL_FORCE_FALLBACK=1`: Force deterministic path
+
+2. CLI options:
+```bash
+annual-report-analysis 
+  --input ./annual_report_analysis/output 
+  --max-chars 3000 
+  --force-agno
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
-MIT
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- FinBERT-Shenanigans model for financial sentiment analysis
+- SMOLDOCLING VLM for document parsing
+- Agno framework for agent orchestration
+- Streamlit for the interactive web interface
+- Financial data providers and news sources
+- UN SDG framework for sustainability metrics

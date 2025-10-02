@@ -1,7 +1,69 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "annual-report-analysis"
 version = "0.1.0"
-description = "Add your description here"
+description = "Annual report analysis using AI with multi-agent system"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = []
+license = "MIT"
+keywords = ["ai", "nlp", "annual-report", "analysis", "finance"]
+authors = [
+    { name = "Harikrushna Goti", email = "harikrushnagoti2002@gmail.com" }
+]
+dependencies = [
+    "yfinance>=0.2.31",
+    "beautifulsoup4>=4.12.2",
+    "requests>=2.31.0",
+    "pandas>=2.1.1",
+    "aiohttp>=3.8.5",
+    "google-api-python-client>=2.108.0",
+    "serpapi>=0.1.5",
+    "textblob>=0.17.1",
+    "finnhub-python>=2.4.18",
+    "newsapi-python>=0.2.7",
+    "python-dateutil>=2.8.2",
+    "spacy>=3.7.2",
+    "transformers>=4.35.0",
+    "torch>=2.1.0",
+    "docling>=0.1.0",
+    "streamlit>=1.28.0",
+    "plotly>=5.18.0",
+    "altair>=5.1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "black>=23.11.0",
+    "isort>=5.12.0",
+    "mypy>=1.7.0",
+    "pylint>=3.0.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/Harikrushna2272/AI_Annual_Report_Analyser"
+Documentation = "https://github.com/Harikrushna2272/AI_Annual_Report_Analyser/blob/main/README.md"
+Repository = "https://github.com/Harikrushna2272/AI_Annual_Report_Analyser.git"
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
