@@ -9,7 +9,7 @@ A sophisticated AI-powered tool for analyzing annual reports using a multi-agent
 - **Collaborative Memory**: Shared insights between agents for better analysis
 - **Task Decomposition**: Smart breaking down of complex analysis tasks
 - **Enhanced Tools**: Web search, financial data, news aggregation, and web crawling capabilities
-- **Sentiment Analysis**: Using FinBERT with financial shenanigans detection
+- **Sentiment Analysis**: Used Fine-Tunned FinBERT with financial shenanigans detection
 - **Document Processing**: PDF parsing with advanced layout recognition
 
 ### Interactive UI Features
