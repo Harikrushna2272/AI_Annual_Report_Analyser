@@ -20,18 +20,21 @@ from .tools import load_parsed_document_chunks
 from .agno_support import is_agno_available, run_with_agno
 
 
+from .collaborative_memory import CollaborativeMemory
+
 def build_workflow():
     ltm = LongTermMemory()
+    collaborative_memory = CollaborativeMemory()
     supervisor = SupervisorAgent(ltm=ltm)
     section_agents: Dict[SectionName, BaseSectionAgent] = {
-        SectionName.letter_to_shareholders: LetterToShareholdersAgent(SectionName.letter_to_shareholders, ltm),
-        SectionName.mdna: MDNAAgent(SectionName.mdna, ltm),
-        SectionName.financial_statements: FinancialStatementsAgent(SectionName.financial_statements, ltm),
-        SectionName.audit_report: AuditReportAgent(SectionName.audit_report, ltm),
-        SectionName.corporate_governance: CorporateGovernanceAgent(SectionName.corporate_governance, ltm),
-        SectionName.sdg_17: SDG17Agent(SectionName.sdg_17, ltm),
-        SectionName.esg: ESGAgent(SectionName.esg, ltm),
-        SectionName.other: BaseSectionAgent(SectionName.other, ltm),
+        SectionName.letter_to_shareholders: LetterToShareholdersAgent(SectionName.letter_to_shareholders, ltm, collaborative_memory),
+        SectionName.mdna: MDNAAgent(SectionName.mdna, ltm, collaborative_memory),
+        SectionName.financial_statements: FinancialStatementsAgent(SectionName.financial_statements, ltm, collaborative_memory),
+        SectionName.audit_report: AuditReportAgent(SectionName.audit_report, ltm, collaborative_memory),
+        SectionName.corporate_governance: CorporateGovernanceAgent(SectionName.corporate_governance, ltm, collaborative_memory),
+        SectionName.sdg_17: SDG17Agent(SectionName.sdg_17, ltm, collaborative_memory),
+        SectionName.esg: ESGAgent(SectionName.esg, ltm, collaborative_memory),
+        SectionName.other: BaseSectionAgent(SectionName.other, ltm, collaborative_memory),
     }
 
     def run(state: WorkflowState) -> WorkflowState:

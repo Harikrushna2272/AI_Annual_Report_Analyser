@@ -1,0 +1,7 @@
+yfinance>=0.2.31
+beautifulsoup4>=4.12.2
+requests>=2.31.0
+pandas>=2.1.1
+lxml>=4.9.3  # for pandas html parsing
+html5lib>=1.1  # alternative parser for pandas
+aiohttp>=3.8.5  # for async requests

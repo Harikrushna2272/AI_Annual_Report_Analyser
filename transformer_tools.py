@@ -16,26 +16,33 @@ def _lazy_import_transformers():
 
 
 def analyze_sentiment_finbert(text: str) -> Optional[Dict[str, float]]:
-    """Use FinBERT sentiment if available, else return None to signal fallback.
-
-    Tries models:
-    - ProsusAI/finbert
-    - yiyanghkust/finbert-tone
+    """Use FinBERT fine-tuned on Financial Shenanigans book for sentiment analysis.
+    
+    Uses model:
+    - harikrushna2272/finbert-shenanigans
+    
+    This model is specifically trained to detect financial manipulation patterns
+    and questionable accounting practices based on the Financial Shenanigans book.
     """
     global _sentiment_pipeline
     if _sentiment_pipeline is None:
         pipeline = _lazy_import_transformers()
         if pipeline is None:
             return None
-        for model_id in [
-            "ProsusAI/finbert",
-            "yiyanghkust/finbert-tone",
-        ]:
+        try:
+            _sentiment_pipeline = pipeline(
+                "sentiment-analysis",
+                model="harikrushna2272/finbert-shenanigans",
+                truncation=True
+            )
+        except Exception:
+            # Fallback to standard FinBERT if shenanigans model fails
             try:
                 _sentiment_pipeline = pipeline(
-                    "sentiment-analysis", model=model_id, truncation=True
+                    "sentiment-analysis",
+                    model="ProsusAI/finbert",
+                    truncation=True
                 )
-                break
             except Exception:
                 _sentiment_pipeline = None
         if _sentiment_pipeline is None:
@@ -60,10 +67,52 @@ def analyze_sentiment_finbert(text: str) -> Optional[Dict[str, float]]:
     return None
 
 
-def detect_risk_fingpt(text: str, labels: Optional[List[str]] = None) -> Optional[Dict[str, float]]:
-    """Approximate finGPT risk tagging via zero-shot classification if available.
+def detect_financial_shenanigans(text: str) -> Optional[Dict[str, float]]:
+    """
+    Specialized function to detect potential financial shenanigans patterns
+    using the fine-tuned FinBERT model.
+    
+    Returns:
+        Dict with probabilities for different types of financial manipulation patterns,
+        or None if the model is not available.
+    """
+    global _shenanigans_pipeline
+    if not hasattr(detect_financial_shenanigans, '_shenanigans_pipeline'):
+        _shenanigans_pipeline = None
+        pipeline = _lazy_import_transformers()
+        if pipeline is not None:
+            try:
+                _shenanigans_pipeline = pipeline(
+                    "text-classification",
+                    model="harikrushna2272/finbert-shenanigans",
+                    truncation=True
+                )
+            except Exception:
+                _shenanigans_pipeline = None
+    
+    if _shenanigans_pipeline is None:
+        return None
+        
+    try:
+        result = _shenanigans_pipeline(text[:2048])
+        if isinstance(result, list) and result:
+            patterns = {}
+            for pred in result:
+                label = str(pred.get("label", "NORMAL")).lower()
+                score = float(pred.get("score", 0.0))
+                patterns[label] = score
+            return patterns
+    except Exception:
+        return None
+    
+    return None
 
-    Default labels cover common financial risks.
+def detect_risk_fingpt(text: str) -> Optional[List[str]]:
+    """Use GPT4-style model for financial risk analysis if available, else None.
+
+    Tries models:
+    - jkpeer/fingpt-sentiment
+    - phidata/fingpt-sentiment
     """
     global _zero_shot_pipeline
     if labels is None:
