@@ -138,11 +138,66 @@ class TaskDecomposer:
 
     def _extract_key_entities(self, content: str) -> List[str]:
         """
-        Extract key entities from content
+        Extract key entities from content using spaCy NER
         """
-        # Implement entity extraction logic here
-        # This could use NER or other extraction techniques
-        return []
+        try:
+            import spacy
+            
+            # Load the English language model
+            nlp = spacy.load("en_core_web_sm")
+            
+            # Process the text
+            doc = nlp(content)
+            
+            # Extract named entities
+            entities = []
+            for ent in doc.ents:
+                if ent.label_ in ['ORG', 'PERSON', 'GPE', 'MONEY', 'PERCENT']:
+                    entities.append({
+                        'text': ent.text,
+                        'type': ent.label_
+                    })
+            
+            # Extract key financial metrics
+            financial_metrics = self._extract_financial_metrics(content)
+            
+            # Combine all entities
+            all_entities = [
+                str(entity) for entity in entities + financial_metrics
+            ]
+            
+            return list(set(all_entities))  # Remove duplicates
+            
+        except Exception as e:
+            print(f"Entity extraction error: {str(e)}")
+            return []
+            
+    def _extract_financial_metrics(self, content: str) -> List[Dict[str, str]]:
+        """
+        Extract financial metrics using regex patterns
+        """
+        import re
+        
+        metrics = []
+        
+        # Patterns for common financial metrics
+        patterns = {
+            'revenue': r'\$?\d+\.?\d*\s*(million|billion|trillion|M|B|T)?\s*(revenue|sales)',
+            'profit': r'\$?\d+\.?\d*\s*(million|billion|trillion|M|B|T)?\s*(profit|earnings|net income)',
+            'growth': r'\d+\.?\d*%\s*(growth|increase|decrease)',
+            'margin': r'\d+\.?\d*%\s*(margin|profitability)',
+            'ratio': r'(P/E|debt[- ]to[- ]equity|current|quick)\s*ratio\s*of\s*\d+\.?\d*'
+        }
+        
+        for metric_type, pattern in patterns.items():
+            matches = re.finditer(pattern, content, re.IGNORECASE)
+            for match in matches:
+                metrics.append({
+                    'text': match.group(0),
+                    'type': f'FINANCIAL_{metric_type.upper()}'
+                })
+                
+        return metrics
 
     def _optimize_task_sequence(self, tasks: List[DecomposedTask]) -> List[DecomposedTask]:
         """
