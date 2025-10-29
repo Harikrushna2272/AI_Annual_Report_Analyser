@@ -4,20 +4,21 @@ from typing import Any, Callable, Dict, List
 
 from .memory import LongTermMemory
 from .prompts import AGNO_SYSTEM_PROMPTS
-from .state import AgentMessage, SectionName, WorkflowState
-from .tools import (
+from ..core.state import AgentMessage, SectionName, WorkflowState
+from ..tools.tools import (
     analyze_sentiment_finbert_stub,
     detect_risk_fingpt_stub,
     guess_section,
     extract_good_bad_points,
 )
-from .transformer_tools import analyze_sentiment_finbert, detect_risk_fingpt
+from ..tools.transformer_tools import analyze_sentiment_finbert, detect_risk_fingpt
 
 
 def is_agno_available() -> bool:
     try:
         from agno.agent import Agent  # type: ignore
         from agno.team import Team  # type: ignore
+
         _ = (Agent, Team)
         return True
     except Exception:
@@ -38,7 +39,8 @@ def _default_tools() -> Dict[str, Callable[..., Any]]:
 def build_agno_team(ltm: LongTermMemory):
     # Reuse centralized agent definitions in agents.py
     try:
-        from .agents import build_agno_team as _build_team  # type: ignore
+        from ..core.agents import build_agno_team as _build_team  # type: ignore
+
         return _build_team()
     except Exception:
         return None
@@ -59,7 +61,10 @@ def run_with_agno(state: WorkflowState) -> WorkflowState:
     related_sections: Dict[SectionName, List[SectionName]] = {
         SectionName.mdna: [SectionName.financial_statements, SectionName.audit_report],
         SectionName.financial_statements: [SectionName.audit_report, SectionName.mdna],
-        SectionName.audit_report: [SectionName.financial_statements, SectionName.corporate_governance],
+        SectionName.audit_report: [
+            SectionName.financial_statements,
+            SectionName.corporate_governance,
+        ],
         SectionName.esg: [SectionName.corporate_governance],
         SectionName.corporate_governance: [SectionName.esg],
         SectionName.letter_to_shareholders: [SectionName.mdna],
@@ -69,7 +74,9 @@ def run_with_agno(state: WorkflowState) -> WorkflowState:
 
     # Message passing: supervisor routes chunks, section agents reply
     for chunk in state.chunks[state.cursor :]:
-        primary = chunk.section_hint or guess_section(chunk.content) or SectionName.other
+        primary = (
+            chunk.section_hint or guess_section(chunk.content) or SectionName.other
+        )
         # Decide collaboration targets
         targets = {primary}
         for sec in related_sections.get(primary, []):
@@ -91,8 +98,15 @@ def run_with_agno(state: WorkflowState) -> WorkflowState:
                 if isinstance(bad_list, list):
                     prior_bad.extend([str(x) for x in bad_list][:2])
 
-            context_snippet = "\n".join([f"- GOOD: {g}" for g in prior_good[:3]] + [f"- BAD: {b}" for b in prior_bad[:3]])
-            context_header = f"Prior context for {section.value}:\n{context_snippet}\n\n" if context_snippet else ""
+            context_snippet = "\n".join(
+                [f"- GOOD: {g}" for g in prior_good[:3]]
+                + [f"- BAD: {b}" for b in prior_bad[:3]]
+            )
+            context_header = (
+                f"Prior context for {section.value}:\n{context_snippet}\n\n"
+                if context_snippet
+                else ""
+            )
 
             # Prepare context prompt
             prompt = (
@@ -109,19 +123,31 @@ def run_with_agno(state: WorkflowState) -> WorkflowState:
                 _ = None
 
             # Deterministic post-processing and memory write
-            guidance = AGNO_SYSTEM_PROMPTS.get(section.value, AGNO_SYSTEM_PROMPTS["other"])  # type: ignore[index]
-            summary_body = (chunk.content[:800] + ("..." if len(chunk.content) > 800 else ""))
+            guidance = AGNO_SYSTEM_PROMPTS.get(
+                section.value, AGNO_SYSTEM_PROMPTS["other"]
+            )  # type: ignore[index]
+            summary_body = chunk.content[:800] + (
+                "..." if len(chunk.content) > 800 else ""
+            )
             summary = f"[{section.value}] {guidance}\n\n{context_header}{summary_body}"
 
-            sentiment = analyze_sentiment_finbert(chunk.content) or analyze_sentiment_finbert_stub(chunk.content)
-            risks = detect_risk_fingpt(chunk.content) or detect_risk_fingpt_stub(chunk.content)
+            sentiment = analyze_sentiment_finbert(
+                chunk.content
+            ) or analyze_sentiment_finbert_stub(chunk.content)
+            risks = detect_risk_fingpt(chunk.content) or detect_risk_fingpt_stub(
+                chunk.content
+            )
             decisions = extract_good_bad_points(chunk.content)
 
             prev_summary = state.section_summaries.get(section, "")
-            combined_summary = (prev_summary + "\n\n" + summary).strip() if prev_summary else summary
+            combined_summary = (
+                (prev_summary + "\n\n" + summary).strip() if prev_summary else summary
+            )
             state.section_summaries[section] = combined_summary
             state.section_findings.setdefault(section, {})
-            state.section_findings[section].setdefault("sentiment", []).append(sentiment)
+            state.section_findings[section].setdefault("sentiment", []).append(
+                sentiment
+            )
             state.section_findings[section].setdefault("risks", []).append(risks)
 
             ltm.upsert(
@@ -161,5 +187,3 @@ def run_with_agno(state: WorkflowState) -> WorkflowState:
     state.global_report = "\n\n".join(parts)
     state.done = True
     return state
-
-

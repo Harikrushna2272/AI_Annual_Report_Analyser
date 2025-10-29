@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .state import AgentMessage, SectionName
+from ..core.state import AgentMessage, SectionName
 
 
 class ShortTermMemory:
@@ -22,7 +22,9 @@ class ShortTermMemory:
 
 
 class LongTermMemory:
-    def __init__(self, base_dir: str | Path = "./annual_report_analysis/memory_store") -> None:
+    def __init__(
+        self, base_dir: str | Path = "./annual_report_analysis/memory_store"
+    ) -> None:
         self.base_path = Path(base_dir)
         self.base_path.mkdir(parents=True, exist_ok=True)
 
@@ -32,12 +34,20 @@ class LongTermMemory:
         agent_dir.mkdir(parents=True, exist_ok=True)
         return agent_dir / f"{section_part}.jsonl"
 
-    def upsert(self, agent_name: str, section: Optional[SectionName], key: str, value: Dict[str, Any]) -> None:
+    def upsert(
+        self,
+        agent_name: str,
+        section: Optional[SectionName],
+        key: str,
+        value: Dict[str, Any],
+    ) -> None:
         path = self._path(agent_name, section)
         with path.open("a") as fp:
             fp.write(json.dumps({"key": key, "value": value}) + "\n")
 
-    def query_all(self, agent_name: str, section: Optional[SectionName]) -> List[Dict[str, Any]]:
+    def query_all(
+        self, agent_name: str, section: Optional[SectionName]
+    ) -> List[Dict[str, Any]]:
         path = self._path(agent_name, section)
         if not path.exists():
             return []
@@ -49,5 +59,3 @@ class LongTermMemory:
                 except Exception:
                     continue
         return results
-
-

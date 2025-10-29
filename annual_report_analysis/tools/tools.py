@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .state import DocumentChunk, SectionName
+from ..core.state import DocumentChunk, SectionName
 
 
 def load_parsed_document_chunks(
@@ -76,7 +76,11 @@ def guess_section(text: str) -> Optional[SectionName]:
         return SectionName.letter_to_shareholders
     if "management's discussion" in lower or "md&a" in lower or "mdna" in lower:
         return SectionName.mdna
-    if "financial statements" in lower or "balance sheet" in lower or "income statement" in lower:
+    if (
+        "financial statements" in lower
+        or "balance sheet" in lower
+        or "income statement" in lower
+    ):
         return SectionName.financial_statements
     if "audit report" in lower or "auditors' report" in lower:
         return SectionName.audit_report
@@ -168,5 +172,3 @@ def extract_good_bad_points(text: str) -> Dict[str, List[str]]:
             # If both, consider as risk-tinged achievement; classify as bad to be conservative
             bads.append(s.strip())
     return {"good": goods[:20], "bad": bads[:20]}
-
-
